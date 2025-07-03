@@ -1,0 +1,14 @@
+[build]
+  publish = "."  # Thư mục gốc chứa các file tĩnh (index.html, urls.js, shortener.js)
+  functions = "netlify/functions"  # Thư mục chứa Netlify Functions
+
+# Cấu hình chuyển hướng (tùy chọn, để xử lý các truy cập link ngắn)
+[[redirects]]
+  from = "/:shortCode"
+  to = "/index.html"
+  status = 200
+  force = false
+
+# Cấu hình biến môi trường (tùy chọn, nếu muốn thêm trong file thay vì dashboard)
+[context.production.environment]
+  GITHUB_TOKEN = "your_github_personal_access_token_here"  # Thay bằng PAT thực tế hoặc quản lý qua Netlify dashboard

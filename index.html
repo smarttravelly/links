@@ -48,6 +48,11 @@
       padding: 2px 4px;
       border-radius: 4px;
     }
+    #instructions {
+      font-size: 14px;
+      color: #333;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -56,7 +61,9 @@
     <input type="text" id="longUrl" placeholder="Enter your long URL">
     <button onclick="shortenUrl()">Shorten</button>
     <p id="result"></p>
-    <p><strong>Note:</strong> After generating a short URL, add it to urls.js and push to GitHub to make it permanent. URLs from smarttravelly.com or its subdomains cannot be shortened.</p>
+    <div id="instructions">
+      <strong>Note:</strong> Short URLs are saved automatically to urls.js. If automatic saving fails, manually add the mapping to <a href="https://github.com/smarttravelly/links/edit/main/urls.js" target="_blank">urls.js</a> and push to GitHub. URLs from smarttravelly.com or its subdomains cannot be shortened.
+    </div>
   </div>
 
   <script src="urls.js"></script>
@@ -74,7 +81,21 @@
     // Load URL mappings from urls.js
     let urlMap = window.urlMap || {};
 
-    function shortenUrl() {
+    async function updateUrlsJs(shortCode, longUrl) {
+      try {
+        const response = await fetch('/.netlify/functions/update-urls', {
+          method: 'POST',
+          body: JSON.stringify({ shortCode, longUrl })
+        });
+        const data = await response.json();
+        return data.success;
+      } catch (error) {
+        console.error('Error updating urls.js:', error);
+        return false;
+      }
+    }
+
+    async function shortenUrl() {
       const longUrl = document.getElementById('longUrl').value.trim();
       // Validate URL format
       if (!longUrl || !/^https?:\/\/([\da-z.-]+)\.([a-z0-9-]+)([\/\w .-]*[\w\/]*)*(\?[\w=&%#_-]*)?$/i.test(longUrl)) {
@@ -98,10 +119,17 @@
       urlMap[shortCode] = longUrl;
       sessionStorage.setItem(`url_${shortCode}`, longUrl);
 
-      // Display short URL with rel="nofollow"
+      // Attempt to update urls.js automatically
+      const updateSuccess = await updateUrlsJs(shortCode, longUrl);
       const shortUrl = `https://links.smarttravelly.com/${shortCode}`;
-      document.getElementById('result').innerHTML = `Short URL: <a href="${shortUrl}" rel="nofollow" target="_blank">${shortUrl}</a><br>
-        <strong>Important:</strong> Add to urls.js: <code>urlMap['${shortCode}'] = '${longUrl}';</code> and push to GitHub.`;
+      if (updateSuccess) {
+        document.getElementById('result').innerHTML = `Short URL: <a href="${shortUrl}" rel="nofollow" target="_blank">${shortUrl}</a><br>
+          <strong>Success:</strong> Short URL saved to urls.js.`;
+      } else {
+        document.getElementById('result').innerHTML = `Short URL: <a href="${shortUrl}" rel="nofollow" target="_blank">${shortUrl}</a><br>
+          <strong>Important:</strong> Automatic save failed. Add to urls.js: <code>urlMap['${shortCode}'] = '${longUrl}';</code><br>
+          <a href="https://github.com/smarttravelly/links/edit/main/urls.js" target="_blank">Edit urls.js on GitHub</a>`;
+      }
     }
 
     // Redirect logic for short URLs

@@ -1,14 +1,11 @@
-const base62 = {
-  charset: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
-  encode: function(num) {
-    let encoded = '';
-    while (num > 0) {
-      encoded = this.charset[num % 62] + encoded;
-      num = Math.floor(num / 62);
-    }
-    return encoded || this.charset[0];
+function generateRandomCode(length = 16) {
+  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let code = '';
+  for (let i = 0; i < length; i++) {
+    code += charset.charAt(Math.floor(Math.random() * charset.length));
   }
-};
+  return code;
+}
 
 function initLinkShortener(containerId) {
   const container = document.getElementById(containerId);
@@ -44,13 +41,13 @@ function shortenUrl(containerId) {
     return;
   }
 
-  // Get or initialize counter in localStorage
-  let counter = parseInt(localStorage.getItem(`counter_${containerId}`) || '0', 10);
-  counter++;
-  localStorage.setItem(`counter_${containerId}`, counter);
+  // Generate unique random short code
+  let shortCode;
+  do {
+    shortCode = generateRandomCode(16);
+  } while (sessionStorage.getItem(`url_${shortCode}_${containerId}`));
 
-  // Generate short code using Base62
-  const shortCode = base62.encode(counter);
+  // Store in sessionStorage for testing
   sessionStorage.setItem(`url_${shortCode}_${containerId}`, longUrl);
 
   // Create short URL with rel="nofollow"

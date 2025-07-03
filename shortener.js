@@ -19,12 +19,26 @@ function initLinkShortener(containerId) {
       <input type="text" id="longUrl_${containerId}" placeholder="Enter your long URL" style="padding: 8px; width: 70%; font-size: 14px;">
       <button onclick="shortenUrl('${containerId}')" style="padding: 8px; font-size: 14px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Shorten</button>
       <p id="result_${containerId}" style="margin-top: 10px;"></p>
-      <p style="font-size: 12px; color: #666;">URLs from smarttravelly.com or its subdomains cannot be shortened.</p>
+      <p style="font-size: 12px; color: #666;">URLs from smarttravelly.com or its subdomains cannot be shortened. Short URLs are saved automatically to <a href="https://github.com/smarttravelly/links/edit/main/urls.js" target="_blank">urls.js</a>.</p>
     </div>
   `;
 }
 
-function shortenUrl(containerId) {
+async function updateUrlsJs(shortCode, longUrl) {
+  try {
+    const response = await fetch('/.netlify/functions/update-urls', {
+      method: 'POST',
+      body: JSON.stringify({ shortCode, longUrl })
+    });
+    const data = await response.json();
+    return data.success;
+  } catch (error) {
+    console.error('Error updating urls.js:', error);
+    return false;
+  }
+}
+
+async function shortenUrl(containerId) {
   const longUrlInput = document.getElementById(`longUrl_${containerId}`);
   const resultDiv = document.getElementById(`result_${containerId}`);
   const longUrl = longUrlInput.value.trim();
@@ -50,8 +64,15 @@ function shortenUrl(containerId) {
   // Store in sessionStorage for testing
   sessionStorage.setItem(`url_${shortCode}_${containerId}`, longUrl);
 
-  // Create short URL with rel="nofollow"
+  // Attempt to update urls.js automatically
+  const updateSuccess = await updateUrlsJs(shortCode, longUrl);
   const shortUrl = `https://links.smarttravelly.com/${shortCode}`;
-  resultDiv.innerHTML = `Short URL: <a href="${shortUrl}" rel="nofollow" target="_blank" style="color: #007bff; text-decoration: none;">${shortUrl}</a><br>
-    <strong>Important:</strong> Add to urls.js: <code>urlMap['${shortCode}'] = '${longUrl}';</code> and push to GitHub.`;
+  if (updateSuccess) {
+    resultDiv.innerHTML = `Short URL: <a href="${shortUrl}" rel="nofollow" target="_blank" style="color: #007bff; text-decoration: none;">${shortUrl}</a><br>
+      <strong>Success:</strong> Short URL saved to urls.js.`;
+  } else {
+    resultDiv.innerHTML = `Short URL: <a href="${shortUrl}" rel="nofollow" target="_blank" style="color: #007bff; text-decoration: none;">${shortUrl}</a><br>
+      <strong>Important:</strong> Automatic save failed. Add to urls.js: <code>urlMap['${shortCode}'] = '${longUrl}';</code><br>
+      <a href="https://github.com/smarttravelly/links/edit/main/urls.js" target="_blank">Edit urls.js on GitHub</a>`;
+  }
 }

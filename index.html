@@ -61,22 +61,18 @@
 
   <script src="urls.js"></script>
   <script>
-    // Base62 encoding function
-    const base62 = {
-      charset: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
-      encode: function(num) {
-        let encoded = '';
-        while (num > 0) {
-          encoded = this.charset[num % 62] + encoded;
-          num = Math.floor(num / 62);
-        }
-        return encoded || this.charset[0];
+    // Function to generate random short code
+    function generateRandomCode(length = 16) {
+      const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let code = '';
+      for (let i = 0; i < length; i++) {
+        code += charset.charAt(Math.floor(Math.random() * charset.length));
       }
-    };
+      return code;
+    }
 
     // Load URL mappings from urls.js
     let urlMap = window.urlMap || {};
-    let counter = parseInt(localStorage.getItem('counter') || Object.keys(urlMap).length, 10);
 
     function shortenUrl() {
       const longUrl = document.getElementById('longUrl').value.trim();
@@ -87,25 +83,25 @@
       }
 
       // Check if URL belongs to smarttravelly.com or its subdomains
-      const domainMatch = longUrl.match(/^https?:\/\/((?:[\da-z-]+\.)*smarttravelly\.com)/i);
-      if (domainMatch) {
+      if (longUrl.match(/^https?:\/\/((?:[\da-z-]+\.)*smarttravelly\.com)/i)) {
         alert('URLs from smarttravelly.com or its subdomains (e.g., links.smarttravelly.com) cannot be shortened.');
         return;
       }
 
-      // Generate short code using Base62
-      counter++;
-      localStorage.setItem('counter', counter);
-      const shortCode = base62.encode(counter);
+      // Generate unique random short code
+      let shortCode;
+      do {
+        shortCode = generateRandomCode(16);
+      } while (urlMap[shortCode] || sessionStorage.getItem(`url_${shortCode}`));
+
+      // Store in urlMap and sessionStorage
       urlMap[shortCode] = longUrl;
+      sessionStorage.setItem(`url_${shortCode}`, longUrl);
 
       // Display short URL with rel="nofollow"
       const shortUrl = `https://links.smarttravelly.com/${shortCode}`;
       document.getElementById('result').innerHTML = `Short URL: <a href="${shortUrl}" rel="nofollow" target="_blank">${shortUrl}</a><br>
         <strong>Important:</strong> Add to urls.js: <code>urlMap['${shortCode}'] = '${longUrl}';</code> and push to GitHub.`;
-
-      // Store temporarily in sessionStorage for testing
-      sessionStorage.setItem(`url_${shortCode}`, longUrl);
     }
 
     // Redirect logic for short URLs

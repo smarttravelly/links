@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartTravelly Link Shortener</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+    }
+    .container {
+      text-align: center;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #result a {
+      color: #007bff;
+      text-decoration: none;
+    }
+    #result a:hover {
+      text-decoration: underline;
+    }
+    #result code {
+      background: #f8f8f8;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>SmartTravelly Link Shortener</h1>
+    <input type="text" id="longUrl" placeholder="Enter your long URL">
+    <button onclick="shortenUrl()">Shorten</button>
+    <p id="result"></p>
+    <p><strong>Note:</strong> After generating a short URL, add it to urls.js and push to GitHub to make it permanent. URLs from smarttravelly.com or its subdomains cannot be shortened.</p>
+  </div>
+
+  <script src="urls.js"></script>
+  <script>
+    // Base62 encoding function
+    const base62 = {
+      charset: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
+      encode: function(num) {
+        let encoded = '';
+        while (num > 0) {
+          encoded = this.charset[num % 62] + encoded;
+          num = Math.floor(num / 62);
+        }
+        return encoded || this.charset[0];
+      }
+    };
+
+    // Load URL mappings from urls.js
+    let urlMap = window.urlMap || {};
+    let counter = parseInt(localStorage.getItem('counter') || Object.keys(urlMap).length, 10);
+
+    function shortenUrl() {
+      const longUrl = document.getElementById('longUrl').value.trim();
+      // Validate URL format
+      if (!longUrl || !/^https?:\/\/([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/.test(longUrl)) {
+        alert('Please enter a valid URL starting with http:// or https://');
+        return;
+      }
+
+      // Check if URL belongs to smarttravelly.com or its subdomains
+      const domainMatch = longUrl.match(/^https?:\/\/((?:[\da-z-]+\.)*smarttravelly\.com)/i);
+      if (domainMatch) {
+        alert('URLs from smarttravelly.com or its subdomains (e.g., links.smarttravelly.com) cannot be shortened.');
+        return;
+      }
+
+      // Generate short code using Base62
+      counter++;
+      localStorage.setItem('counter', counter);
+      const shortCode = base62.encode(counter);
+      urlMap[shortCode] = longUrl;
+
+      // Display short URL with rel="nofollow"
+      const shortUrl = `https://links.smarttravelly.com/${shortCode}`;
+      document.getElementById('result').innerHTML = `Short URL: <a href="${shortUrl}" rel="nofollow" target="_blank">${shortUrl}</a><br>
+        <strong>Important:</strong> Add to urls.js: <code>urlMap['${shortCode}'] = '${longUrl}';</code> and push to GitHub.`;
+
+      // Store temporarily in sessionStorage for testing
+      sessionStorage.setItem(`url_${shortCode}`, longUrl);
+    }
+
+    // Redirect logic for short URLs
+    const path = window.location.pathname.split('/')[1];
+    if (path) {
+      const longUrl = urlMap[path] || sessionStorage.getItem(`url_${path}`);
+      if (longUrl) {
+        window.location.href = longUrl;
+      } else {
+        document.getElementById('result').innerText = 'Invalid or expired short URL';
+      }
+    }
+  </script>
+</body>
+</html>

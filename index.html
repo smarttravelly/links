@@ -52,7 +52,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>南海: SmartTravelly Link Shortener</h1>
+    <h1>SmartTravelly Link Shortener</h1>
     <input type="text" id="longUrl" placeholder="Enter your long URL">
     <button onclick="shortenUrl()">Shorten</button>
     <p id="result"></p>
@@ -77,13 +77,13 @@
     function shortenUrl() {
       const longUrl = document.getElementById('longUrl').value.trim();
       // Validate URL format
-      if (!longUrl || !/^https | http:\/\/([\da-z.-]+)\.([a-z0-9-]+)([\/\w .-]*[\w\/]*)*(\?[\w=&%#_-]*)?$/i.test(longUrl)) {
+      if (!longUrl || !/^https?:\/\/([\da-z.-]+)\.([a-z0-9-]+)([\/\w .-]*[\w\/]*)*(\?[\w=&%#_-]*)?$/i.test(longUrl)) {
         alert('Please enter a valid URL starting with http:// or https://');
         return;
       }
 
       // Check if URL belongs to smarttravelly.com or its subdomains
-      if (longUrl.match(/^https | http:\/\/((?:[\da-z-]+\.)*smarttravelly\.com)/i)) {
+      if (longUrl.match(/^https?:\/\/((?:[\da-z-]+\.)*smarttravelly\.com)/i)) {
         alert('URLs from smarttravelly.com or its subdomains (e.g., links.smarttravelly.com) cannot be shortened.');
         return;
       }

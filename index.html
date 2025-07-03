@@ -77,7 +77,7 @@
     function shortenUrl() {
       const longUrl = document.getElementById('longUrl').value.trim();
       // Validate URL format
-      if (!longUrl || !/^https?:\/\/([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/.test(longUrl)) {
+      if (!longUrl || !/^https?:\/\/([\da-z.-]+)\.([a-z0-9-]+)([\/\w .-]*[\w\/]*)*(\?[\w=&%#_-]*)?$/i.test(longUrl)) {
         alert('Please enter a valid URL starting with http:// or https://');
         return;
       }
